@@ -24,6 +24,7 @@ export default function LegendSetWindow(gis) {
         startValue,
         endValue,
         color,
+        bgColor,
         legendGrid,
         create,
         update,
@@ -70,7 +71,7 @@ export default function LegendSetWindow(gis) {
     });
 
     legendStore = Ext.create('Ext.data.Store', {
-        fields: ['id', 'name', 'startValue', 'endValue', 'color'],
+        fields: ['id', 'name', 'startValue', 'endValue', 'color', 'bgColor'],
         proxy: {
             type: 'ajax',
             url: '',
@@ -252,6 +253,7 @@ export default function LegendSetWindow(gis) {
                 editStartValue,
                 editEndValue,
                 editColor,
+                editBgColor,
                 editCancel,
                 editUpdate,
                 editWindow;
@@ -283,10 +285,17 @@ export default function LegendSetWindow(gis) {
             });
 
             editColor = Ext.create('Ext.ux.button.ColorButton', {
-                width: windowWidth - windowBorder - bodyPadding - (2 * legendBodyBorder) - (2 * legendBodyPadding) - fieldLabelWidth + 4,
+                width: windowWidth - windowBorder - bodyPadding - (2 * legendBodyBorder) - (2 * legendBodyPadding) - fieldLabelWidth + 2,
                 height: 23,
                 style: 'border-radius: 1px',
                 value: record.data.color.replace('#', '')
+            });
+
+            editBgColor = Ext.create('Ext.ux.button.ColorButton', {
+                width: windowWidth - windowBorder - bodyPadding - (2 * legendBodyBorder) - (2 * legendBodyPadding) - fieldLabelWidth + 2,
+                height: 23,
+                style: 'border-radius: 1px',
+                value: record.data.bgColor.replace('#', '')
             });
 
             validateEditLegendForm = function() {
@@ -319,6 +328,7 @@ export default function LegendSetWindow(gis) {
                     record.set('startValue', editStartValue.getValue());
                     record.set('endValue', editEndValue.getValue());
                     record.set('color', '#' + editColor.getValue());
+                    record.set('bgColor', '#' + editBgColor.getValue());
 
                     editWindow.destroy();
                     window.isDirty = true;
@@ -366,6 +376,19 @@ export default function LegendSetWindow(gis) {
                             },
                             editColor
                         ]
+                    },
+                    {
+                        layout: 'column',
+                        cls: 'gis-container-inner',
+                        bodyStyle: 'background: transparent',
+                        items: [
+                            {
+                                html: GIS.i18n.legend_symbolizer_background + ':',
+                                width: fieldLabelWidth,
+                                bodyStyle: 'background:transparent; padding-top:3px; padding-left:3px'
+                            },
+                            editBgColor
+                        ]
                     }
                 ]
             });
@@ -379,7 +402,7 @@ export default function LegendSetWindow(gis) {
 
         // legend panel
         tmpLegendStore = Ext.create('Ext.data.ArrayStore', {
-            fields: ['id', 'name', 'startValue', 'endValue', 'color']
+            fields: ['id', 'name', 'startValue', 'endValue', 'color', 'bgColor']
         });
 
         legendSetName = Ext.create('Ext.form.field.Text', {
@@ -418,7 +441,14 @@ export default function LegendSetWindow(gis) {
         });
 
         color = Ext.create('Ext.ux.button.ColorButton', {
-            width: windowWidth - windowBorder - bodyPadding - (2 * legendBodyBorder) - (2 * legendBodyPadding) - fieldLabelWidth,
+            width: windowWidth - windowBorder - bodyPadding - (2 * legendBodyBorder) - (2 * legendBodyPadding) - fieldLabelWidth - 2,
+            height: 23,
+            style: 'border-radius: 1px',
+            value: 'e1e1e1'
+        });
+
+        bgColor = Ext.create('Ext.ux.button.ColorButton', {
+            width: windowWidth - windowBorder - bodyPadding - (2 * legendBodyBorder) - (2 * legendBodyPadding) - fieldLabelWidth - 2,
             height: 23,
             style: 'border-radius: 1px',
             value: 'e1e1e1'
@@ -435,6 +465,7 @@ export default function LegendSetWindow(gis) {
                     sv = startValue.getValue(),
                     ev = endValue.getValue(),
                     co = color.getValue().toUpperCase(),
+                    bgco = bgColor.getValue().toUpperCase(),
                     items = tmpLegendStore.data.items,
                     data = [];
 
@@ -448,7 +479,8 @@ export default function LegendSetWindow(gis) {
                         name: ln,
                         startValue: sv,
                         endValue: ev,
-                        color: '#' + co
+                        color: '#' + co,
+                        bgColor: '#' + bgco
                     });
 
                     data = arraySort(data, 'ASC', 'startValue');
@@ -460,6 +492,7 @@ export default function LegendSetWindow(gis) {
                     startValue.reset();
                     endValue.reset();
                     color.reset();
+                    bgColor.reset();
 
                     window.isDirty = true;
                 } else if (!ln) {
@@ -492,7 +525,10 @@ export default function LegendSetWindow(gis) {
                     sortable: false,
                     width: 45,
                     renderer: function(value, metaData, record) {
-                        return '<span style="color:' + record.data.color + '">Color</span>';
+                        return '<span style="color:' + record.data.color +
+                            '; background-color:' + record.data.bgColor +
+                            '">Color</span>';
+
                     }
                 },
                 {
@@ -614,6 +650,19 @@ export default function LegendSetWindow(gis) {
                                 },
                                 color
                             ]
+                        },
+                        {
+                            layout: 'column',
+                            cls: 'gis-container-inner',
+                            bodyStyle: 'background: transparent',
+                            items: [
+                                {
+                                    html: GIS.i18n.legend_symbolizer_background + ':',
+                                    width: fieldLabelWidth,
+                                    bodyStyle: 'background:transparent; padding-top:3px; padding-left:3px'
+                                },
+                                bgColor
+                            ]
                         }
                     ]
                 },
@@ -640,7 +689,8 @@ export default function LegendSetWindow(gis) {
         });
 
         if (id) {
-            legendStore.proxy.url = encodeURI(gis.init.contextPath + '/api/legendSets/' + id + '.json?fields=legends[id,displayName|rename(name),startValue,endValue,color]');
+            legendStore.proxy.url = encodeURI(gis.init.contextPath + '/api/legendSets/' + id +
+                '.json?fields=legends[id,displayName|rename(name),startValue,endValue,color,bgColor]');
             legendStore.load();
 
             legendSetName.setValue(legendSetStore.getById(id).data.name);
@@ -697,7 +747,8 @@ export default function LegendSetWindow(gis) {
                 name: item.data.name,
                 startValue: item.data.startValue,
                 endValue: item.data.endValue,
-                color: item.data.color
+                color: item.data.color,
+                bgColor: item.data.bgColor
             });
         }
 
